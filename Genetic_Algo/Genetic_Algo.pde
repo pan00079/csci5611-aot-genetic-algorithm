@@ -1,27 +1,43 @@
 // Genetic Algo by Kaushall
 
+// Change number of agents
 int num_agents = 10;
-int num_best_agents = 1;  // should be 0.1 * num_agents
+
+// Change number of paramters
 int num_parameters = 3; // Speed and Size and Color
+
+// Changes the how strict the genetic algorithm is
+int num_best_agents = 1;  // should be 0.1 * num_agents
+float sucess_rates[];
+float best_sucess_rates[];
+
+// Changes the minimum and maximum for the two parameters we have
 float maxSpeed = 300;
 float minSpeed = 10;
 float maxSize = 100;
 float minSize = 10;
+
 float agents[][];
 float best_agents[][]; 
+
+// Used to set starting position and movement for the agents
 Vec3 agent_pos[];
 Vec3 agent_vel[];
-float sucess_rates[];
-float best_sucess_rates[];
+
+
 
 void setup(){
   size(1280, 720);
+  // Initializing the arrays
   agents = new float[num_agents][num_parameters];
   best_agents = new float[num_best_agents][num_parameters];
   sucess_rates = new float[num_agents];
   best_sucess_rates = new float[num_best_agents];
   agent_pos = new Vec3[num_agents];
   agent_vel = new Vec3[num_agents];
+  
+  
+  // Setting starting parameters
   for(int i = 0; i < num_agents; i++){
     for(int j = 0; j < num_parameters; j++){
       agents[i][j] = random(10, 100);
@@ -32,6 +48,7 @@ void setup(){
   }
 }
 
+// Function used to find the best performing agents to propagate into the next generation
 void find_best_agents(){
   int best_value;
   float[][] temp_agents = new float[num_agents][num_parameters];
@@ -62,6 +79,8 @@ void find_best_agents(){
     temp_sucess_rates[best_value] = swap_holder;
   }
   
+  
+  // Selecting the number of best agents from the pile
   for(int i = 0; i < num_best_agents; i++){
     for(int j = 0; j < num_parameters; j++){
       best_agents[i][j] = temp_agents[i][j];
@@ -72,14 +91,19 @@ void find_best_agents(){
   
 }
 
+
 void update(float dt){
   keyPressed();
+  
+  // If the agents have reached the goal
   for(int i = 0; i < num_agents; i++){
     agent_pos[i] = agent_pos[i].plus(agent_vel[i].times(dt));
     if(agent_pos[i].x <= 0){
       agent_vel[i] = new Vec3(0,0,0);
     }
   }
+  
+  // Determining agent success by calculating how close each agent is to the finish line
   float vel_sum = 0;
   float sucess_sum = 0;
   for(int i = 0; i < num_agents; i++){
@@ -103,9 +127,9 @@ void update(float dt){
     
     
     
-    
     for(int i = 0; i < num_agents; i++){
       for(int j = 0; j < num_parameters; j++){
+        // progating to the next step and adding a degree of mutation
         agents[i][j] = average_of_parameter[j] + random(-20, 20);
       }
       
@@ -129,7 +153,7 @@ void update(float dt){
         agents[i][2] = minSize;
       }
       
-      // Resseting the simulation
+      // Resetting the simulation
       agent_pos[i] = new Vec3(1000, random(0, 700), 0);
       agent_vel[i] = new Vec3(-agents[i][0], 0, 0);
       sucess_rates[i] = 0.0;
