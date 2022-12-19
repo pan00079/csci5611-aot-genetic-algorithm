@@ -157,8 +157,10 @@ MonoBehaviour:
   numParameters: 3
   maxSpeed: 10
   minSpeed: 1
-  maxSize: 15
+  maxSize: 10
   minSize: 5
+  maxDefense: 2
+  minDefense: 1
 --- !u!4 &187384652
 Transform:
   m_ObjectHideFlags: 0
@@ -345,7 +347,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
   m_LocalRotation: {x: 0, y: 0.99147904, z: -0.1302666, w: 0}
-  m_LocalPosition: {x: 50, y: 20, z: 150}
+  m_LocalPosition: {x: 0, y: 20, z: 150}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

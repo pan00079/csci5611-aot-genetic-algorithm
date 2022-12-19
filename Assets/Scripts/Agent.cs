@@ -21,6 +21,9 @@ public class Agent : MonoBehaviour
     void Start()
     {
         animator = GetComponent<Animator>();
+
+        // find all the bones that are needed to scale the titans
+        // and make the weirdly shaped
         Transform root = transform.Find("Armature").Find("Root_M");
         body = root.Find("Spine1_M").gameObject;
         legL = root.Find("Hip_L").gameObject;
@@ -28,21 +31,31 @@ public class Agent : MonoBehaviour
         armL = body.transform.Find("Spine2_M").Find("Chest_M").Find("Scapula_L").gameObject;
         armR = body.transform.Find("Spine2_M").Find("Chest_M").Find("Scapula_R").gameObject;
 
-
+        // scale each body part based on the stats
+        // body = health, legs = speed, ars = defense
         body.transform.localScale *= health;
         legL.transform.localScale *= (speed);
         legR.transform.localScale *= (speed);
-        //armL.transform.localScale *= (defense / health);
-        //armR.transform.localScale *= (defense / health);
 
-        //Debug.Log("STATS:");
-        //Debug.Log(health);
-        //Debug.Log(speed);
+        // scalar to manage size of the arms
+        float scalar = 1f;
+        if (defense > 1f)
+        {
+            scalar = 0.2f;
+        }
+        armL.transform.localScale *= (defense * scalar);
+        armR.transform.localScale *= (defense * scalar);
+
+        // Debug.Log("STATS:");
+        // Debug.Log(health);
+        // Debug.Log(speed);
+        // Debug.Log(defense);
     }
 
     // Update is called once per frame
     void Update()
     {
+        // if titan reached its goal and wasn't killed, have it attack the wall
         if (goalReached)
         {
             animator.Play("MeleeAttack_OneHanded");
@@ -51,43 +64,62 @@ public class Agent : MonoBehaviour
 
     // 0 = arm, 1 = body, 2 = legs
     public void TakeDamage(int part) {
-        animator.Play("GetHit");
-        switch(part)
-        {
-            case 0:
-                Debug.Log("arms");
-                health -= (1f / defense);
-                break;
-            case 1:
-                health -= (2f / defense);
-                break;
-            case 2:
-                health -= 5f;
-                break;
-            default:
-                break;
-        }
+        // can't attack the titan if it reached the wall
+        if (goalReached) return;
+
+        // if it's health is already 0, don't do anything and play stunned animation
         if (health <= 0f)
         {
             speed = 0f;
             animator.Play("StunnedLoop");
         }
+        else {
+            // otherwise, animate getting hit
+            animator.Play("GetHit");
+
+            // and apply damage based on the body part hit
+            switch(part)
+            {
+                case 0:
+                    health -= (2f / defense);
+                    break;
+                case 1:
+                    health -= (3f / defense);
+                    break;
+                // legs are not affected by defense and take most damage
+                case 2:
+                    health -= 5f;
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 
+    // called whenever we need a new generation of titans
     public void UpdateAgent()
     {
+        // reset goal and animatorr values
         goalReached = false;
         animator.Play("Sprint");
 
-        body.transform.localScale = Vector3.one * health;
-        legL.transform.localScale = Vector3.one * (speed / 2f);
-        legR.transform.localScale = Vector3.one * (speed / 2f);
-        //armL.transform.localScale = Vector3.one * (defense / health);
-        //armR.transform.localScale = Vector3.one *(defense / health);
 
-        //Debug.Log("STATS:");
-        //Debug.Log(health);
-        //Debug.Log(speed);
+        // re-scale the titans based on the new health, speed, and defense values
+        body.transform.localScale = Vector3.one * health;
+        legL.transform.localScale = Vector3.one * (speed);
+        legR.transform.localScale = Vector3.one * (speed);
+        float scalar = 1f;
+        if (defense > 1f)
+        {
+            scalar = 0.2f;
+        }
+        armL.transform.localScale = Vector3.one * (defense * scalar);
+        armR.transform.localScale = Vector3.one * (defense * scalar);
+
+        // Debug.Log("STATS:");
+        // Debug.Log(health);
+        // Debug.Log(speed); 
+        // Debug.Log(defense);
     }
 
 }

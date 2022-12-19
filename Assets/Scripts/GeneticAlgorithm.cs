@@ -4,12 +4,17 @@ using UnityEngine;
 
 public class GeneticAlgorithm : MonoBehaviour
 {
-    // Start is called before the first frame update
+    // Genetic Algo by Kaushall
+    // Unity Translation by Julia
+
     public GameObject titanBase;
 
+    // Change number of agents
     public int numAgents = 10;
+    // Change number of paramters
     public int numParameters = 3;
 
+    // Changes the minimum and maximum for the three parameters we have
     [Header("SpeedSettings")]
     public float maxSpeed = 10;
     public float minSpeed = 2;
@@ -18,16 +23,24 @@ public class GeneticAlgorithm : MonoBehaviour
     public float maxSize = 15;
     public float minSize = 2;
 
-    int numBestAgents;
+    [Header("DefenseSettings")]
+    public float maxDefense = 5;
+    public float minDefense = 1;
+
     float[,] agents;
     float[,] bestAgents;
+
+    // Changes the how strict the genetic algorithm is
+    int numBestAgents;
     float[] successRates;
     float[] bestSuccessRates;
 
+    // GameObjects that keep track of our titans
     List<GameObject> agentObjects;
 
     void Start()
     {
+        // Initializing the arrays and values
         numBestAgents = (int) 0.1f * numAgents;
         agents = new float[numAgents, numParameters];
         bestAgents = new float[numAgents, numParameters];
@@ -35,30 +48,39 @@ public class GeneticAlgorithm : MonoBehaviour
         bestSuccessRates = new float[numBestAgents];
         agentObjects = new List<GameObject>();
 
+        // Initializing the titans
         for (int i = 0; i < numAgents; i++)
         {
+            // Initial generation picks random values in the range for our parameters
             float agentSpeed = Random.Range(minSpeed, maxSpeed);
             float agentSize = Random.Range(minSize, maxSize);
+            float agentDefense = Random.Range(minSize, maxSize);
 
+            // initialize agents and success rates array
             agents[i, 0] = agentSpeed;
             agents[i, 1] = agentSize;
+            agents[i, 2] = agentDefense;
             successRates[i] = 0.0f;
 
+            // Initialize titan object based on the base prefab
             GameObject agent = Instantiate(titanBase);
             agent.name = "Agent #" + i;
-            // agent.tag = "Titan";
+            agentObjects.Add(agent);
 
+            // add agent component that keeps track of its stats, sizes, etc
             agent.AddComponent<Agent>();
             agent.GetComponent<Agent>().speed = agentSpeed;
-            // agent.transform.localScale *= agentSize;
             agent.GetComponent<Agent>().health = agentSize;
+            agent.GetComponent<Agent>().defense = agentDefense;
+
+            // initialize positions
             float offsetX = i * 10.0f;
-            float offsetZ = Random.Range(0, 0);
-            agent.transform.localPosition = new Vector3(offsetX, 2, offsetZ);
-            agentObjects.Add(agent);
+            // float offsetZ = Random.Range(0, 0);
+            agent.transform.localPosition = new Vector3(offsetX, (agentSize/2f), 0f);
         }
     }
 
+    // Function used to find the best performing agents to propagate into the next generation
     void FindBestAgents()
     {
         int bestValue;
@@ -66,6 +88,7 @@ public class GeneticAlgorithm : MonoBehaviour
         float[] tempSuccessRates = new float[numAgents];
         float swapHolder;
 
+        // Insertion Sort on temp agents
         for (int i = 0; i < numAgents; i++)
         {
             for (int j = 0; j < numParameters; j++)
@@ -96,6 +119,7 @@ public class GeneticAlgorithm : MonoBehaviour
             tempSuccessRates[bestValue] = swapHolder;
         }
 
+        // Selecting the number of best agents from the pile
         for (int i = 0; i < numBestAgents; i++)
         {
             for (int j = 0; j < numParameters; j++)
@@ -109,14 +133,15 @@ public class GeneticAlgorithm : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        // hit-to-stop controls - should probably be moved to its own script
         // https://docs.unity3d.com/ScriptReference/Physics.Raycast.html
+        // Hit detection fromm the user - checks if there is a hit,
+        // and if there is, what body part of the titan was hit
         if (Input.GetMouseButtonDown(0))
         {
             RaycastHit hitInfo = new RaycastHit();
             if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hitInfo))
             {
-                if (hitInfo.transform.gameObject.tag == "TitanArms")
+                if (hitInfo.transform.gameObject.tag == "TitanArm")
                 {
                     hitInfo.transform.gameObject.GetComponentInParent<Agent>().TakeDamage(0);
                 }
@@ -131,13 +156,12 @@ public class GeneticAlgorithm : MonoBehaviour
             }
         }
 
-
+        // If the agents have reached the goal
         for (int i = 0; i < numAgents; i++)
         {
-            // Stop the agent at Vector3(x, y, -100)
+            // Stop the agent at Vector3(x, y, 100)
             GameObject agent = agentObjects[i];
             Vector3 agentVel = new Vector3(0f, 0f, agent.GetComponent<Agent>().speed) * Time.deltaTime;
-            //agent.transform.localPosition += (agentVel * Time.deltaTime);
             agent.transform.Translate(agentVel);
             if (agent.transform.localPosition.z > 100)
             {
@@ -146,6 +170,8 @@ public class GeneticAlgorithm : MonoBehaviour
             }
 
         }
+
+        // Determining agent success by calculating how close each agent is to the finish line
         float velSum = 0;
         float successSum = 0;
         for (int i = 0; i < numAgents; i++)
@@ -182,13 +208,11 @@ public class GeneticAlgorithm : MonoBehaviour
                 for (int j = 0; j < numParameters; j++)
                 {
                     // mutation rate - random.range
+                    // progating to the next step and adding a degree of mutation
                     agents[i, j] = averageParameters[j] + Random.Range(-5, 5);
                 }
 
                 // Setting MaxLimits and MinLimits
-                Debug.Log("Before");
-                Debug.Log(agents[i, 0]);
-                Debug.Log(agents[i, 1]);
                 if (agents[i, 0] > maxSpeed)
                 {
                     agents[i, 0] = maxSpeed;
@@ -205,29 +229,25 @@ public class GeneticAlgorithm : MonoBehaviour
                 {
                     agents[i, 1] = minSize;
                 }
-                Debug.Log("After");
-                Debug.Log(agents[i, 0]);
-                Debug.Log(agents[i, 1]);
-                /*
-                if (agents[i, 2] < minSpeed)
+                
+                if (agents[i, 2] > maxDefense)
                 {
-                    agents[i, 2] = maxSpeed;
+                    agents[i, 2] = maxDefense;
                 }
-                if (agents[i, 2] < minSize)
+                if (agents[i, 2] < minDefense)
                 {
-                    agents[i, 2] = minSize;
+                    agents[i, 2] = minDefense;
                 }
-                */
+                
 
                 // Resseting the simulation
-
-
                 GameObject agent = agentObjects[i];
                 float offsetX = i * 10.0f;
-                float offsetZ = Random.Range(0, 0);
-                agent.transform.localPosition = new Vector3(offsetX, 1, offsetZ);
+                // float offsetZ = Random.Range(0, 0);
+                agent.transform.localPosition = new Vector3(offsetX, 1, 0f);
                 agent.GetComponent<Agent>().speed = agents[i, 0];
                 agent.GetComponent<Agent>().health = agents[i, 1];
+                agent.GetComponent<Agent>().defense = agents[i, 2];
                 agent.GetComponent<Agent>().UpdateAgent();
                 successRates[i] = 0.0f;
             }
